@@ -27,20 +27,22 @@ def extract_text_from_txt(txt_file):
     text = stringio.read()
     return text
 
-def summarize_text(doc_names, context):
+def summarize_text(api_key, doc_names, context):
+    openai.api_key = api_key
     prompt = (
-        "You are proficient in document analysis, cybersecurity research, and artificial intelligence. Your writing style is precise rather than overly embellished. Upon receiving a collection of documents, each listed with a name in quotes, followed by their content delimited like XML, you will extract pertinent information to craft a cohesive presentation. This presentation will integrate the main ideas from all documents, focusing on the applications of Generative AI in Cybersecurity. Proper citations from the documents will be included throughout the Markdown-based Point-of-View presentation."
-        f"{doc_names}\n\n{context}"
+        "You have expertise in cybersecurity and artificial intelligence. When given a set of documents, you will pull out the key information from the document to create a presentation. You have a very clear and straight-to-the-point writing style. This presentation will focus on how Generative AI is applied in Cybersecurity."
+       
     )
     response = openai.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": f"Thank you for your help! Please use your specialties to generate a Point-of-View presentation on the use of Generative AI in cybersecurity for the following document(s):\n\n{doc_names}\n\n{context}"}
         ],
         max_tokens=1500
     )
-    return response.choices[0].message['content'].strip()
+    return response.choices[0].message.content
+
 
 class PDF(FPDF):
     def header(self):
@@ -101,7 +103,7 @@ def main():
 
         if st.button("Summarize and Generate Presentation"):
             context = "".join([f"<{name}> {content} </{name}>\n" for name, content in context_map.items()])
-            summary = summarize_text(doc_names, context)
+            summary = summarize_text(openai.api_key, doc_names, context)
             st.text("Generated Presentation:")
             st.write(summary)
 
